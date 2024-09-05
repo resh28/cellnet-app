@@ -1,23 +1,30 @@
 package com.example.cellnet.core.common
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import com.example.cellnet.core.common.constants.ApiKeys
 import com.example.cellnet.core.common.model.NetworkOperatorCodes
 import com.example.cellnet.core.common.model.cellTowerData
+import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Locale
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 object LocationUtil {
-    private const val apiKey = ApiKeys.apiKey // Replace with your actual API Key
+    private const val apiKey = ApiKeys.geolocationApiKey // Replace with your actual API Key
 
-    fun fetchLocationDetails(cellTowerData: cellTowerData, context: Context, networkOperatorCodes: NetworkOperatorCodes ): Location {
+    fun fetchCellTowerLocationDetails(cellTowerData: cellTowerData, context: Context, networkOperatorCodes: NetworkOperatorCodes ): Location {
         val urlString = "https://www.googleapis.com/geolocation/v1/geolocate?key=$apiKey"
         // Create a new thread for network operations
 //        Thread {
@@ -86,5 +93,35 @@ object LocationUtil {
         }
 
         return "Location not found"
+    }
+
+    suspend fun getLastKnownLocation(context: Context): Location? {
+        return suspendCancellableCoroutine { continuation ->
+            val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location ->
+                        if (location != null) {
+                            Log.d("location", "${location.latitude} ${location.longitude}")
+                            continuation.resume(location)
+                        } else {
+                            continuation.resume(null)
+                        }
+                    }
+                    .addOnFailureListener { exception ->
+                        continuation.resumeWithException(exception)
+                    }
+            } else {
+                continuation.resume(null)
+            }
+        }
     }
 }

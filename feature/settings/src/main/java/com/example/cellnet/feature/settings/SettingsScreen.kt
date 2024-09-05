@@ -1,38 +1,44 @@
 package com.example.cellnet.feature.settings
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.outlined.ColorLens
+import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -43,7 +49,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavOptions
 import androidx.navigation.navOptions
 import com.example.cellnet.core.common.Util
+import com.example.cellnet.core.common.model.AppTheme
 import com.example.cellnet.core.designsystem.appSnackbarHost.AppSnackBarHost
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun SettingsRoute(
@@ -54,6 +62,7 @@ internal fun SettingsRoute(
     SettingsScreen(modifier = modifier, settingsViewModel= settingsViewModel, navigateToAuthScreen = navigateToAuthScreen)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 internal fun SettingsScreen(
@@ -68,6 +77,10 @@ internal fun SettingsScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val snackBarNotificationFlow by Util.getSnackbarFlow().collectAsStateWithLifecycle()
+
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+    var showBottomSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = snackBarNotificationFlow) {
         if (snackBarNotificationFlow.second != "") {
@@ -90,12 +103,87 @@ internal fun SettingsScreen(
         },
     )
     {
+        if (showBottomSheet) {
+            ModalBottomSheet(
+                onDismissRequest = {
+                    showBottomSheet = false
+                },
+                sheetState = sheetState
+            ) {
+                // Sheet content
+//                Button(onClick = {
+//                    scope.launch { sheetState.hide() }.invokeOnCompletion {
+//                        if (!sheetState.isVisible) {
+//                            showBottomSheet = false
+//                        }
+//                    }
+//                }) {
+//                    Text("Hide bottom sheet")
+//                }
+                Column(
+                    modifier = modifier
+                        .padding(horizontal = 20.dp)
+                        .fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Select application theme",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = modifier
+                            .padding(bottom = 10.dp)
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = modifier
+                            .padding(bottom = 6.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(text = "Use device theme")
+                        RadioButton(
+                            selected = settingsUiState.appTheme == AppTheme.SYSTEM_DEFAULT,
+                            onClick = { settingsViewModel.updateApplicationTheme(AppTheme.SYSTEM_DEFAULT) }
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = modifier
+                            .padding(bottom = 6.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(text = "Light mode")
+                        RadioButton(
+                            selected = settingsUiState.appTheme == AppTheme.LIGHT,
+                            onClick = { settingsViewModel.updateApplicationTheme(AppTheme.LIGHT) }
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = modifier
+                            .padding(bottom = 6.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(text = "Dark mode")
+                        RadioButton(
+                            selected = settingsUiState.appTheme == AppTheme.DARK,
+                            onClick = { settingsViewModel.updateApplicationTheme(AppTheme.DARK) }
+                        )
+                    }
+                }
+            }
+        }
         Column(
             modifier = modifier
                 .padding(20.dp),
         ) {
             ElevatedCard(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiary
+                ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 6.dp
                 ),
@@ -134,17 +222,14 @@ internal fun SettingsScreen(
                 }
             }
 
-
             ElevatedCard(
                 onClick = {
-                    settingsViewModel.userSignOut()
-                    navigateToAuthScreen(
-                        navOptions {
-                            launchSingleTop = true
-                        }
-                    )
+                    showBottomSheet = true
                 },
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiary
+                ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 6.dp
                 ),
@@ -160,7 +245,52 @@ internal fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.ExitToApp,
+                            imageVector = Icons.Outlined.LightMode,
+                            contentDescription = "",
+                            modifier = modifier
+//                                .size(80.dp)
+                                .padding(end = 10.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Column {
+                            Text(
+                                text = "Select application theme",
+                            )
+                        }
+                    }
+                }
+            }
+
+
+            ElevatedCard(
+                onClick = {
+                    settingsViewModel.userSignOut()
+                    navigateToAuthScreen(
+                        navOptions {
+                            launchSingleTop = true
+                        }
+                    )
+                },
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiary
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 6.dp
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+            ) {
+                Column(
+                    modifier = modifier
+                        .padding(14.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Logout,
                             contentDescription = "",
                             modifier = modifier
 //                                .size(80.dp)

@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.example.cellnet.core.common.model.AppTheme
 import com.example.cellnet.core.common.model.User
 import com.example.cellnet.core.data.iRepository.LocalStorageRepository
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +18,7 @@ class DefaultLocalStorageRepository @Inject constructor (
     private val lastName = stringPreferencesKey("LAST_NAME")
     private val email = stringPreferencesKey("EMAIL")
     private val userId = stringPreferencesKey("USER_UID")
+    private val appTheme = stringPreferencesKey("APP_THEME")
 
     override suspend fun saveUser(
         user: User
@@ -38,6 +40,21 @@ class DefaultLocalStorageRepository @Inject constructor (
                 prefs[lastName] ?: defUser.lastName,
                 prefs[email] ?: defUser.email,
             )
+        }
+    }
+
+    override suspend fun saveAppTheme(
+        applicationTheme: AppTheme
+    ) {
+        dataStore.edit { preferences ->
+            preferences[appTheme] = applicationTheme.toString()
+        }
+    }
+
+    override fun getAppTheme(): Flow<AppTheme> {
+        return dataStore.data.map { prefs ->
+            val theme = prefs[appTheme]?.let { AppTheme.valueOf(it) }
+            theme ?: AppTheme.SYSTEM_DEFAULT
         }
     }
 }

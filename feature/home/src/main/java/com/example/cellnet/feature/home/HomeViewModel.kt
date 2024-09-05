@@ -13,14 +13,12 @@ import com.example.cellnet.core.common.NetworkUtil
 import com.example.cellnet.core.common.model.CellTowerInfo
 import com.example.cellnet.core.common.model.NetworkInfo
 import com.example.cellnet.core.common.model.SnackbarInfoLevel
-import com.example.cellnet.core.common.model.User
 import com.example.cellnet.core.data.iRepository.FirebaseRepository
 import com.example.cellnet.core.data.iRepository.LocalStorageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -102,7 +100,7 @@ class HomeViewModel @Inject constructor(
         CoroutineScope(Dispatchers.IO).launch {
             val cellTowerInfo = getCellTowerInfo(context)
 
-            val location = Util.getLastKnownLocation(context)
+            val location = LocationUtil.getLastKnownLocation(context)
             val currentLocation = Location("")
             location?.let {
                 currentLocation.longitude = location.longitude
@@ -141,7 +139,7 @@ class HomeViewModel @Inject constructor(
     fun getCurrentLocation(context: Context) {
         viewModelScope.launch {
             try {
-                val location = Util.getLastKnownLocation(context)
+                val location = LocationUtil.getLastKnownLocation(context)
                 val currentLocation = Location("")
 
                 location?.let {
@@ -166,7 +164,7 @@ class HomeViewModel @Inject constructor(
         val cellTowerData = NetworkUtil.getCellTowerData(context)
         val networkOperatorCodes = NetworkUtil.getNetworkOperatorCodes(context)
         if (cellTowerData.cid != null && cellTowerData.lac != null) {
-            cellTowerLocation = LocationUtil.fetchLocationDetails(cellTowerData, context, networkOperatorCodes)
+            cellTowerLocation = LocationUtil.fetchCellTowerLocationDetails(cellTowerData, context, networkOperatorCodes)
         }
         return CellTowerInfo(
             uId = "${networkOperatorCodes.mcc}-${networkOperatorCodes.mnc}-${cellTowerData.lac}-${cellTowerData.cid}",
@@ -235,26 +233,5 @@ class HomeViewModel @Inject constructor(
         }
         return successful
     }
-
-//    fun test() {
-//        val db = Firebase.firestore
-//
-//        val user = hashMapOf(
-//            "first" to "Ada",
-//            "last" to "Lovelace",
-//            "born" to 1815,
-//        )
-//
-//// Add a new document with a generated ID
-//        db.collection("test")
-//            .add(user)
-//            .addOnSuccessListener { documentReference ->
-//                Log.d("test", "DocumentSnapshot added with ID: ${documentReference.id}")
-//            }
-//            .addOnFailureListener { e ->
-//                Log.w("test", "Error adding document", e)
-//            }
-//
-//    }
 
 }

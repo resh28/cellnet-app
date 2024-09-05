@@ -2,6 +2,7 @@ package com.example.cellnet.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cellnet.core.common.model.AppTheme
 import com.example.cellnet.core.data.iRepository.FirebaseRepository
 import com.example.cellnet.core.data.iRepository.LocalStorageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,11 +33,28 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    init {
+        viewModelScope.launch {
+            localStorageRepository.getAppTheme().collect {appTheme ->
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        appTheme = appTheme
+                    )
+                }
+            }
+        }
+    }
+
     fun userSignOut(){
         viewModelScope.launch {
             firebaseRepository.signOutUser()
         }
     }
 
+    fun updateApplicationTheme(appTheme: AppTheme){
+        viewModelScope.launch {
+            localStorageRepository.saveAppTheme(appTheme)
+        }
 
+    }
 }
