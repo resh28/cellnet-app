@@ -154,6 +154,7 @@ class AuthViewModel @Inject constructor(
             val user = it.toObject(User::class.java)
             Log.d("user:getUser", user.toString())
             user?.let {
+                user.userId = uid
                 saveUserOnDataStore(user)
             }
         }.onFailure { exception ->
