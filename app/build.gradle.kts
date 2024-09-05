@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     id("dagger.hilt.android.plugin")
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -14,7 +15,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -53,8 +54,12 @@ android {
 
 dependencies {
     implementation(projects.core.common)
+    implementation(projects.core.data)
     implementation(projects.core.designsystem)
+    implementation(projects.feature.authentication)
+    implementation(projects.feature.dashboard)
     implementation(projects.feature.home)
+    implementation(projects.feature.settings)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -63,6 +68,7 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
+
     implementation(libs.androidx.material3)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -77,4 +83,10 @@ dependencies {
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+
+    implementation("androidx.compose.material:material:1.0.0")
 }

@@ -1,9 +1,628 @@
 package com.example.cellnet.feature.home
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.motionEventSpy
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.cellnet.core.common.LocationUtil
+import com.example.cellnet.core.common.Util
+import com.example.cellnet.core.designsystem.appSnackbarHost.AppSnackBarHost
+import java.time.format.DateTimeFormatter
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
-internal fun HomeRoute() {
-    Text(text = "Home Screen")
+internal fun HomeRoute(
+    modifier: Modifier = Modifier,
+    homeViewModel: HomeViewModel = hiltViewModel()
+) {
+    HomeScreen(modifier = modifier, homeViewModel = homeViewModel)
+}
+
+@RequiresApi(Build.VERSION_CODES.Q)
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "DefaultLocale")
+@Composable
+internal fun HomeScreen(
+    modifier: Modifier,
+    homeViewModel: HomeViewModel,
+) {
+    val homeUiState by homeViewModel.uiState.collectAsState()
+
+    val context = LocalContext.current
+
+    val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val snackBarNotificationFlow by Util.getSnackbarFlow().collectAsStateWithLifecycle()
+
+    var hasLocationPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+    var hasReadPhoneStatePermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val permissions = listOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.READ_PHONE_STATE
+    )
+
+    val multiplePermissionsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissionsMap ->
+        permissionsMap.forEach { (permission, granted) ->
+            if (granted) {
+                if (permission == "android.permission.ACCESS_FINE_LOCATION")
+                    hasLocationPermission = true
+                if (permission == "android.permission.READ_PHONE_STATE")
+                    hasReadPhoneStatePermission = true
+                Log.d("Permission Granted", "$permission is granted")
+            } else {
+                Log.d("Permission Denied", "$permission is denied")
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        multiplePermissionsLauncher.launch(permissions.toTypedArray())
+    }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            hasLocationPermission = granted
+            if (!granted) {
+                Log.d("Location Permission", "Location Permission not granted")
+            }
+        }
+    )
+
+    val readPhoneStatePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            if (!granted) {
+                Log.d("ReadPhoneState Permission", "ReadPhoneState Permission not granted")
+            }
+        }
+    )
+
+    LaunchedEffect(key1 = snackBarNotificationFlow) {
+        if (snackBarNotificationFlow.second != "") {
+            snackbarHostState.showSnackbar(
+                message = snackBarNotificationFlow.second,
+                actionLabel = "",
+                duration = SnackbarDuration.Short,
+            )
+        }
+    }
+
+    Scaffold(
+//        topBar = {
+//            TopAppBar(
+//                colors = TopAppBarDefaults.topAppBarColors(
+//                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+//                    titleContentColor = MaterialTheme.colorScheme.primary,
+//                ),
+//                title = {
+//                    Text("Cellnet Dashboard")
+//                }
+//            )
+//        },
+        snackbarHost = {
+            AppSnackBarHost(
+                snackbarHostState = snackbarHostState,
+                modifier = modifier,
+                componentHeight = remember { mutableStateOf(20.dp) },
+                infoLevel = snackBarNotificationFlow.first
+            )
+        },
+    ) {innerPadding ->
+        Column(
+            modifier = modifier
+                .padding(20.dp),
+//            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = modifier
+                    .padding(top = 24.dp)
+                    .fillMaxWidth(),
+            ) {
+                Text(
+                    text = "Cellnet",
+                    fontSize = 30.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                if (homeUiState.isScanData)
+                    Button(
+                        onClick = {
+                            homeViewModel.updateIsDataUploading(true)
+                            homeViewModel.uploadData()
+                        },
+                        enabled = !homeUiState.isDataUploaded && !homeUiState.isDataUploading
+                    ) {
+                        Text(text = "Upload Data")
+                        if (homeUiState.isDataUploading)
+                            CircularProgressIndicator(
+                                modifier = modifier
+                                    .size(24.dp)
+                                    .padding(start = 5.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.Gray
+                            )
+                    }
+            }
+            Text(
+                text = "Hello, welcome ${homeUiState.userData.firstName}. Let's explore about your network information.",
+                color = Color.Gray
+            )
+
+            if (!hasLocationPermission && !hasReadPhoneStatePermission) {
+                Column(
+                    modifier = modifier
+                        .fillMaxSize()
+                        .padding(bottom = 100.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Column(
+                        modifier = modifier
+                            .fillMaxWidth(0.75f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "",
+                            modifier = modifier.size(200.dp),
+                            tint = Color.Gray
+                        )
+                        Text(
+                            text = "To use the application you need to give couple of permissions first. Please click below button and follow steps to grant required permissions",
+                            textAlign = TextAlign.Center
+                        )
+                        Button(
+                            onClick = { multiplePermissionsLauncher.launch(permissions.toTypedArray()) },
+                            modifier = modifier
+                                .padding(top = 10.dp)
+                        ) {
+                            Text(text = "Grant Permissions")
+                        }
+                    }
+                }
+            } else {
+                if (!homeUiState.isScanData){
+                    Column(
+                        modifier = modifier
+                            .fillMaxSize()
+                            .padding(bottom = 100.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        ElevatedCard(
+                            onClick = {
+                                homeViewModel.updateIsScanning(true)
+                                homeViewModel.updateIsDataUploaded(false)
+                                homeViewModel.onScan(context)
+                            },
+                            enabled = !homeUiState.isScanning,
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary),
+                            elevation = CardDefaults.cardElevation(
+                                defaultElevation = 10.dp
+                            ),
+                            modifier = Modifier
+                                .size(200.dp),
+                            shape = CircleShape
+                        ) {
+                            Column(
+                                modifier = modifier
+                                    .fillMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                ElevatedCard(
+                                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                                    elevation = CardDefaults.cardElevation(
+                                        defaultElevation = 100.dp
+                                    ),
+                                    modifier = Modifier
+                                        .size(170.dp),
+                                    shape = CircleShape
+                                ) {
+                                    Column(
+                                        modifier = modifier
+                                            .fillMaxSize(),
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = "SCAN",
+                                            modifier = Modifier,
+                                            textAlign = TextAlign.Center,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = "NETWORK",
+                                            modifier = Modifier,
+                                            textAlign = TextAlign.Center,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = "INFO",
+                                            modifier = Modifier,
+                                            textAlign = TextAlign.Center,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .padding(top = 20.dp)
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                    ) {
+                        ElevatedCard(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(
+                                defaultElevation = 6.dp
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                        ) {
+                            Column(
+                                modifier = modifier
+                                    .padding(20.dp)
+                            ) {
+                                Text(
+                                    text = "Device Information",
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = modifier
+                                        .padding(bottom = 5.dp)
+                                )
+                                Row {
+                                    Text(text = "Name: ")
+                                    Text(text = homeUiState.deviceInfo.productName, fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "Manufacturer: ")
+                                    Text(text = homeUiState.deviceInfo.manufacturer, fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "Phone Type: ")
+                                    Text(text = homeUiState.deviceInfo.phoneType, fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "Operating System: ")
+                                    Text(text = homeUiState.deviceInfo.osVersion, fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "App Version: ")
+                                    Text(text = homeUiState.deviceInfo.appVersion, fontWeight = FontWeight.Light)
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = modifier
+                                .fillMaxWidth()
+                                .padding(top = 20.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            ElevatedCard(
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                elevation = CardDefaults.cardElevation(
+                                    defaultElevation = 6.dp
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth(0.45f)
+                                    .padding(end = 20.dp),
+                            ) {
+                                Column(
+                                    modifier = modifier
+                                        .padding(20.dp)
+                                ) {
+                                    Text(
+                                        text = "Timestamp",
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = modifier
+                                            .padding(bottom = 5.dp)
+                                    )
+                                    Text(text = "${homeUiState.dateTime?.format(dateFormatter)}", fontWeight = FontWeight.Light)
+                                    Text(text = "${homeUiState.dateTime?.format(timeFormatter)}", fontWeight = FontWeight.Light)
+                                }
+                            }
+                            ElevatedCard(
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                elevation = CardDefaults.cardElevation(
+                                    defaultElevation = 6.dp
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                            ) {
+                                Column(
+                                    modifier = modifier
+                                        .padding(20.dp)
+                                ) {
+                                    Text(
+                                        text = "Device Location",
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = modifier
+                                            .padding(bottom = 5.dp)
+                                    )
+                                    Text(text = LocationUtil.getLocationName(context, homeUiState.currentLocation.latitude, homeUiState.currentLocation.longitude), fontWeight = FontWeight.Light)
+                                    Text(
+                                        text = "lat ${String.format("%.4f", homeUiState.currentLocation.latitude)}, lng ${String.format("%.4f", homeUiState.currentLocation.longitude)}",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Light
+                                    )
+                                }
+                            }
+                        }
+
+                        ElevatedCard(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(
+                                defaultElevation = 6.dp
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 20.dp),
+                        ) {
+                            Column(
+                                modifier = modifier
+                                    .padding(20.dp)
+                            ) {
+                                Text(
+                                    text = "Network Information",
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = modifier
+                                        .padding(bottom = 5.dp)
+                                )
+                                Row {
+                                    Text(text = "Network Operator: ")
+                                    Text(text = homeUiState.networkOperator, fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "Network Class: ")
+                                    Text(text = homeUiState.networkClass, fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "Downloading Speed: ")
+                                    Text(text = "${homeUiState.networkDownSpeed} Mbps", fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "Uploading Speed: ")
+                                    Text(text = "${homeUiState.networkUpSpeed} Mbps", fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "Signal Strength: ")
+                                    Text(text = "${homeUiState.signalStrength} dBm", fontWeight = FontWeight.Light)
+                                }
+
+                            }
+                        }
+
+                        ElevatedCard(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(
+                                defaultElevation = 6.dp
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 20.dp),
+                        ) {
+                            Column(
+                                modifier = modifier
+                                    .padding(20.dp)
+                            ) {
+                                Text(
+                                    text = "Cell Tower Information",
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = modifier
+                                        .padding(bottom = 5.dp)
+                                )
+                                Row {
+                                    Text(text = "Mobile Country Code: ")
+                                    Text(text = homeUiState.cellTowerInfo.mcc, fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "Mobile Network Code: ")
+                                    Text(text = homeUiState.cellTowerInfo.mnc, fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "Cell Id: ")
+                                    Text(text = "${homeUiState.cellTowerInfo.cid}", fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "LAC/TAC: ")
+                                    Text(text = "${homeUiState.cellTowerInfo.lac}", fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "Latitude: ")
+                                    Text(text = "${homeUiState.cellTowerInfo.lat}", fontWeight = FontWeight.Light)
+                                }
+                                Row {
+                                    Text(text = "Longitude: ")
+                                    Text(text = "${homeUiState.cellTowerInfo.lng}", fontWeight = FontWeight.Light)
+                                }
+                            }
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                homeViewModel.updateIsScanning(true)
+                                homeViewModel.onScan(context)
+                            },
+                            modifier = modifier
+                                .padding(top = 20.dp, bottom = 80.dp)
+                                .fillMaxWidth(),
+                            enabled = !homeUiState.isScanning
+                        ) {
+                            Text(text = "Scan Again")
+                            if (homeUiState.isScanning)
+                                CircularProgressIndicator(
+                                    modifier = modifier
+                                        .size(24.dp)
+                                        .padding(start = 5.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color.Gray
+                                )
+                        }
+                    }
+
+                    
+                    
+                    
+                    
+//                    Column(
+//                        modifier = modifier
+//                            .padding(10.dp)
+//                    ) {
+//                        Text(text = "Device = ${homeUiState.deviceInfo.productName}")
+//                        Text(text = "Date Time = ${homeUiState.dateTime?.format(dateTimeFormatter)}")
+//                        Text(text = "Current Location = ${LocationUtil.getLocationName(context, homeUiState.currentLocation.latitude, homeUiState.currentLocation.longitude)}")
+//                        Text(text = "Cell Tower Location = lat ${homeUiState.cellTowerInfo.lat}, lng ${homeUiState.cellTowerInfo.lng}")
+//                        Text(text = "Network Operator = ${homeUiState.networkOperator}")
+//                        Text(text = "Phone Type = ${homeUiState.phoneType}")
+//                        Text(text = "Network Class = ${homeUiState.networkClass}")
+//                        if (homeUiState.networkClass == "WIFI") {
+//                            Text(text = "Wifi SSID = ${homeUiState.wifiSSID}")
+//                        }
+//                        Text(text = "Download Speed = ${homeUiState.networkDownSpeed} Mbps")
+//                        Text(text = "Upload Speed = ${homeUiState.networkUpSpeed} Mbps")
+//                        Text(text = "Signal Strength = ${homeUiState.signalStrength} dBm")
+//
+//
+//                        Button(onClick = {
+//                            homeViewModel.uploadData()
+//                        }) {
+//                            Text(text = "Upload")
+//                        }
+//                    }
+                }
+            }
+
+
+
+
+
+
+//            Column(
+//                modifier = modifier
+//                    .padding(10.dp)
+//            ) {
+//                Text(text = "Device = ${homeUiState.deviceInfo.productName}")
+//                Text(text = "Date Time = ${homeUiState.dateTime?.format(dateTimeFormatter)}")
+//                Text(text = "Current Location = ${LocationUtil.getLocationName(context, homeUiState.currentLocation.latitude, homeUiState.currentLocation.longitude)}")
+//                Text(text = "Cell Tower Location = lat ${homeUiState.cellTowerInfo.lat}, lng ${homeUiState.cellTowerInfo.lng}")
+//                Text(text = "Network Operator = ${homeUiState.networkOperator}")
+//                Text(text = "Phone Type = ${homeUiState.phoneType}")
+//                Text(text = "Network Class = ${homeUiState.networkClass}")
+//                if (homeUiState.networkClass == "WIFI") {
+//                    Text(text = "Wifi SSID = ${homeUiState.wifiSSID}")
+//                }
+//                Text(text = "Download Speed = ${homeUiState.networkDownSpeed} Mbps")
+//                Text(text = "Upload Speed = ${homeUiState.networkUpSpeed} Mbps")
+//                Text(text = "Signal Strength = ${homeUiState.signalStrength} dBm")
+//
+//                Button(onClick = {
+//                    homeViewModel.onScan(context)
+//                    if (hasLocationPermission) {
+//                        homeViewModel.getCurrentLocation(context)
+//                    } else{
+//                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+//                    }
+//                }) {
+//                    Text(text = "Scan")
+//                }
+//
+//                Button(onClick = {
+//                    homeViewModel.uploadData()
+//                }) {
+//                    Text(text = "Upload")
+//                }
+//            }
+        }
+    }
 }

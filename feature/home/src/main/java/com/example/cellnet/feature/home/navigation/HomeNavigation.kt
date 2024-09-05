@@ -1,5 +1,7 @@
 package com.example.cellnet.feature.home.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -15,6 +17,7 @@ fun NavController.navigateToHome(
     this.navigate(homeNavigationRoute, navOptions)
 }
 
+@RequiresApi(Build.VERSION_CODES.Q)
 fun NavGraphBuilder.homeScreen(
 
 ) {

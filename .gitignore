@@ -31,3 +31,7 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+app/google-services.json
+
+core/common/src/main/java/com/example/cellnet/core/common/constants/ApiKeys.kt

@@ -16,6 +16,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://jitpack.io")
     }
 }
 
@@ -26,3 +27,7 @@ include(":app")
 include(":core:common")
 include(":core:designsystem")
 include(":feature:home")
+include(":core:data")
+include(":feature:authentication")
+include(":feature:dashboard")
+include(":feature:settings")

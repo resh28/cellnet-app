@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -40,4 +41,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation(libs.play.services.location)
+
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.material3)
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 }
