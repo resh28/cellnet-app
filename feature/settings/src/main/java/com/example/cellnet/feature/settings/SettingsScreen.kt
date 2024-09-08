@@ -9,13 +9,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.ColorLens
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.outlined.ColorLens
 import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,14 +33,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -51,7 +49,7 @@ import androidx.navigation.navOptions
 import com.example.cellnet.core.common.Util
 import com.example.cellnet.core.common.model.AppTheme
 import com.example.cellnet.core.designsystem.appSnackbarHost.AppSnackBarHost
-import kotlinx.coroutines.launch
+import com.example.cellnet.core.designsystem.outlinedTextFieldWithErrorLabel.OutlinedTextFieldWithErrorLabel
 
 @Composable
 internal fun SettingsRoute(
@@ -80,7 +78,6 @@ internal fun SettingsScreen(
 
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
-    var showBottomSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = snackBarNotificationFlow) {
         if (snackBarNotificationFlow.second != "") {
@@ -103,10 +100,10 @@ internal fun SettingsScreen(
         },
     )
     {
-        if (showBottomSheet) {
+        if (settingsUiState.showThemeChangeBottomSheet) {
             ModalBottomSheet(
                 onDismissRequest = {
-                    showBottomSheet = false
+                    settingsViewModel.updateShowThemeChangeBottomSheet(false)
                 },
                 sheetState = sheetState
             ) {
@@ -175,6 +172,84 @@ internal fun SettingsScreen(
                 }
             }
         }
+        if (settingsUiState.showPasswordChangeBottomSheet) {
+            ModalBottomSheet(
+                onDismissRequest = {
+                    settingsViewModel.updateShowPasswordChangeBottomSheet(false)
+                },
+                sheetState = sheetState
+            ) {
+                Column(
+                    modifier = modifier
+                        .padding(horizontal = 20.dp)
+                        .fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Change password",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = modifier
+                            .padding(bottom = 10.dp)
+                    )
+                    OutlinedTextFieldWithErrorLabel(
+                        value = settingsUiState.currentPassword,
+                        labelText = "Current password",
+                        onValueChange = { settingsViewModel.updateCurrentPassword(it) },
+                        focusManager = focusManager,
+                        errorMsg = settingsUiState.currentPasswordError,
+                        keyboardType = KeyboardType.Password,
+                        validateOnFocusChange = { settingsViewModel.validateOnFocusChange() },
+                        modifier = modifier.fillMaxWidth(),
+                        isTextVisible = false
+                    )
+                    OutlinedTextFieldWithErrorLabel(
+                        value = settingsUiState.newPassword,
+                        labelText = "New password",
+                        onValueChange = { settingsViewModel.updateNewPassword(it) },
+                        focusManager = focusManager,
+                        errorMsg = settingsUiState.newPasswordError,
+                        keyboardType = KeyboardType.Password,
+                        validateOnFocusChange = { settingsViewModel.validateOnFocusChange() },
+                        modifier = modifier.fillMaxWidth(),
+                        isTextVisible = false
+                    )
+                    OutlinedTextFieldWithErrorLabel(
+                        value = settingsUiState.confirmPassword,
+                        labelText = "Confirm new password",
+                        onValueChange = { settingsViewModel.updateConfirmPassword(it) },
+                        focusManager = focusManager,
+                        errorMsg = settingsUiState.confirmPasswordError,
+                        keyboardType = KeyboardType.Password,
+                        validateOnFocusChange = { settingsViewModel.validateOnFocusChange() },
+                        modifier = modifier.fillMaxWidth(),
+                        isTextVisible = false
+                    )
+                    Button(
+                        modifier = modifier
+                            .padding(top = 20.dp, bottom = 20.dp)
+                            .fillMaxWidth(),
+                        onClick = {
+                            settingsViewModel.updateIsLoading(true)
+                            settingsViewModel.updatePassword()
+                        },
+                        enabled = !settingsUiState.isLoading
+                    ) {
+                        Text(text = "Update password")
+                        if (settingsUiState.isLoading)
+                            CircularProgressIndicator(
+                                modifier = modifier
+                                    .size(24.dp)
+                                    .padding(start = 5.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.Gray
+                            )
+                    }
+
+                }
+            }
+        }
+
         Column(
             modifier = modifier
                 .padding(20.dp),
@@ -224,7 +299,7 @@ internal fun SettingsScreen(
 
             ElevatedCard(
                 onClick = {
-                    showBottomSheet = true
+                    settingsViewModel.updateShowThemeChangeBottomSheet(true)
                 },
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
@@ -248,7 +323,6 @@ internal fun SettingsScreen(
                             imageVector = Icons.Outlined.LightMode,
                             contentDescription = "",
                             modifier = modifier
-//                                .size(80.dp)
                                 .padding(end = 10.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -261,6 +335,43 @@ internal fun SettingsScreen(
                 }
             }
 
+            ElevatedCard(
+                onClick = {
+                    settingsViewModel.updateShowPasswordChangeBottomSheet(true)
+                },
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiary
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 6.dp
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+            ) {
+                Column(
+                    modifier = modifier
+                        .padding(14.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Lock,
+                            contentDescription = "",
+                            modifier = modifier
+                                .padding(end = 10.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Column {
+                            Text(
+                                text = "Change password",
+                            )
+                        }
+                    }
+                }
+            }
 
             ElevatedCard(
                 onClick = {
@@ -293,7 +404,6 @@ internal fun SettingsScreen(
                             imageVector = Icons.Default.Logout,
                             contentDescription = "",
                             modifier = modifier
-//                                .size(80.dp)
                                 .padding(end = 10.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )

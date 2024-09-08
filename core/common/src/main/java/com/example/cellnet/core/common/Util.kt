@@ -35,7 +35,6 @@ object Util {
         return DeviceInfo(
             androidId, productName, model, manufacturer, osVersion, appVersion, "", phoneType
         )
-
     }
 
     private fun getPackageInfo(context: Context, flags: Int = 0): PackageInfo =

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavOptions
 import androidx.navigation.navOptions
 import com.example.cellnet.core.common.Util
+import com.example.cellnet.core.common.DataValidationUtil
 import com.example.cellnet.core.common.model.SnackbarInfoLevel
 import com.example.cellnet.core.common.model.User
 import com.example.cellnet.core.data.iRepository.FirebaseRepository
@@ -23,7 +24,6 @@ import javax.inject.Inject
 class AuthViewModel @Inject constructor(
     private val firebaseRepository: FirebaseRepository,
     private val localStorageRepository: LocalStorageRepository,
-    private val validateData: ValidateData
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
@@ -178,8 +178,8 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun validateSignIn() {
-        val emailResult = validateData.validateEmail(_uiState.value.email)
-        val passwordResult = validateData.validatePassword(_uiState.value.password)
+        val emailResult = DataValidationUtil.validateEmail(_uiState.value.email)
+        val passwordResult = DataValidationUtil.validatePassword(_uiState.value.password)
 
         signInHasError = listOf(
             emailResult,
@@ -197,11 +197,11 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun validateSignUp() {
-        val firstNameResult = validateData.validateFirstName(_uiState.value.firstName)
-        val lastNameResult = validateData.validateLastName(_uiState.value.lastName)
-        val emailResult = validateData.validateEmail(_uiState.value.email)
-        val passwordResult = validateData.validatePassword(_uiState.value.password)
-        val confirmPasswordResult = validateData.validateConfirmPassword(_uiState.value.confirmPassword, _uiState.value.password)
+        val firstNameResult = DataValidationUtil.validateFirstName(_uiState.value.firstName)
+        val lastNameResult = DataValidationUtil.validateLastName(_uiState.value.lastName)
+        val emailResult = DataValidationUtil.validateEmail(_uiState.value.email)
+        val passwordResult = DataValidationUtil.validatePassword(_uiState.value.password)
+        val confirmPasswordResult = DataValidationUtil.validateConfirmPassword(_uiState.value.confirmPassword, _uiState.value.password)
 
         signUpHasError = listOf(
             firstNameResult,

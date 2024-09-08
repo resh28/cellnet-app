@@ -5,9 +5,9 @@ import com.example.cellnet.core.common.model.CellTowerInfo
 import com.example.cellnet.core.common.model.DeviceInfo
 import com.example.cellnet.core.common.model.NetworkInfo
 import com.example.cellnet.core.common.model.User
-import com.example.cellnet.core.common.model.cellTowerData
 import com.example.cellnet.core.data.iRepository.FirebaseRepository
 import com.google.firebase.Firebase
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
@@ -49,6 +49,23 @@ class DefaultFirebaseRepository @Inject constructor(
         }
     }
 
+    override suspend fun changePassword(currentPassword: String, newPassword: String): Result<String> {
+        return try {
+            val user = auth.currentUser
+            val email = user?.email
+            if (email != null) {
+                val credential = EmailAuthProvider.getCredential(email, currentPassword)
+                user.reauthenticate(credential).await() // Re-authenticate first
+                user.updatePassword(newPassword).await() // Then update the password
+                Result.success("Password updated successfully")
+            } else {
+                Result.failure(Exception("User is not authenticated"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getUser(userId: String): Result<DocumentSnapshot> {
         return try {
             val docRef = db.collection("users").document(userId)
@@ -63,23 +80,7 @@ class DefaultFirebaseRepository @Inject constructor(
         }
     }
 
-    private suspend fun saveData(collectionName: String, documentId: String?, data: Any): Result<String> {
-        return try {
-            val dataMap = KotlinSerializationMapHelper.toMap(data)
-            val documentReference = if (documentId != null) {
-                db.collection(collectionName).document(documentId)
-            } else {
-                db.collection(collectionName).document()
-            }
-            documentReference.set(dataMap).await()
-            Result.success("Data saved successfully to the collection '$collectionName'")
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
      override suspend fun saveUser(userId: String, userData: User): Result<String> {
-//        return saveData("users", userId, userData)
          return try {
             val user = KotlinSerializationMapHelper.toMap(userData)
             db.collection("users").document(userId).set(user).await()
@@ -90,7 +91,6 @@ class DefaultFirebaseRepository @Inject constructor(
     }
 
     override suspend fun saveDeviceInfo(deviceInfo: DeviceInfo): Result<String> {
-//        return saveData("devices", deviceInfo.androidId, deviceInfo)
         return try {
             val deviceInfoMap = KotlinSerializationMapHelper.toMap(deviceInfo)
             db.collection("devices").document(deviceInfo.androidId).set(deviceInfoMap).await()
@@ -101,7 +101,6 @@ class DefaultFirebaseRepository @Inject constructor(
     }
 
     override suspend fun saveCellTowerInfo(cellTowerInfo: CellTowerInfo): Result<String> {
-//        return saveData("cellTowers", cellTowerInfo.uId, cellTowerInfo)
         return try {
             val cellTowerInfoMap = KotlinSerializationMapHelper.toMap(cellTowerInfo)
             db.collection("cellTowers").document(cellTowerInfo.uId).set(cellTowerInfoMap).await()
@@ -112,7 +111,6 @@ class DefaultFirebaseRepository @Inject constructor(
     }
 
     override suspend fun saveNetworkInfo(networkInfo: NetworkInfo): Result<String> {
-//        return saveData("networkData", null, networkInfo)
         return try {
             val networkInfoMap = KotlinSerializationMapHelper.toMap(networkInfo)
             db.collection("networkData").document().set(networkInfoMap).await()

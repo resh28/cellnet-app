@@ -1,11 +1,9 @@
-package com.example.cellnet.feature.authentication
+package com.example.cellnet.core.common
 
 import android.util.Patterns
 import com.example.cellnet.core.common.model.ValidationResult
-import javax.inject.Inject
 
-class ValidateData @Inject constructor() {
-
+object DataValidationUtil {
     fun validateEmail(email: String): ValidationResult {
         if (email.isBlank()) {
             return ValidationResult(
@@ -92,5 +90,4 @@ class ValidateData @Inject constructor() {
             )
         }
     }
-
 }
