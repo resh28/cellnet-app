@@ -1,5 +1,7 @@
 package com.example.cellnet.core.data.repository
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.cellnet.core.common.KotlinSerializationMapHelper
 import com.example.cellnet.core.common.model.CellTowerInfo
 import com.example.cellnet.core.common.model.DeviceInfo
@@ -12,6 +14,8 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import java.util.Calendar
+import java.util.Date
 import javax.inject.Inject
 
 class DefaultFirebaseRepository @Inject constructor(
@@ -92,8 +96,7 @@ class DefaultFirebaseRepository @Inject constructor(
 
     override suspend fun saveDeviceInfo(deviceInfo: DeviceInfo): Result<String> {
         return try {
-            val deviceInfoMap = KotlinSerializationMapHelper.toMap(deviceInfo)
-            db.collection("devices").document(deviceInfo.androidId).set(deviceInfoMap).await()
+            db.collection("devices").document(deviceInfo.androidId).set(deviceInfo).await()
             Result.success("Device info saved successfully")
         } catch (e: Exception) {
             Result.failure(e)
@@ -102,8 +105,7 @@ class DefaultFirebaseRepository @Inject constructor(
 
     override suspend fun saveCellTowerInfo(cellTowerInfo: CellTowerInfo): Result<String> {
         return try {
-            val cellTowerInfoMap = KotlinSerializationMapHelper.toMap(cellTowerInfo)
-            db.collection("cellTowers").document(cellTowerInfo.uId).set(cellTowerInfoMap).await()
+            db.collection("cellTowers").document(cellTowerInfo.uid).set(cellTowerInfo).await()
             Result.success("Cell tower info saved successfully")
         } catch (e: Exception) {
             Result.failure(e)
@@ -112,9 +114,56 @@ class DefaultFirebaseRepository @Inject constructor(
 
     override suspend fun saveNetworkInfo(networkInfo: NetworkInfo): Result<String> {
         return try {
-            val networkInfoMap = KotlinSerializationMapHelper.toMap(networkInfo)
-            db.collection("networkData").document().set(networkInfoMap).await()
+            db.collection("networkData").document().set(networkInfo).await()
             Result.success("Network info saved successfully")
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override suspend fun getLastNetworkInfo(duration: Long): Result<List<NetworkInfo>> {
+        return try {
+            val calendar = Calendar.getInstance()
+            calendar.time = Date()
+            calendar.add(Calendar.DAY_OF_MONTH, -duration.toInt())
+            val timeStamp = calendar.time
+
+            val documents = db.collection("networkData")
+                .whereEqualTo("userId", auth.currentUser?.uid)
+                .whereGreaterThanOrEqualTo("timeStamp", timeStamp)
+                .orderBy("timeStamp")
+                .get()
+                .await()
+
+            if (!documents.isEmpty) {
+                val networkInfoList = documents.map { document ->
+                    document.toObject(NetworkInfo::class.java)
+                }
+                Result.success(networkInfoList)
+            } else {
+                Result.failure(Exception("No network data found"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getCellTowerData(cellTowerIds: List<String>): Result<List<CellTowerInfo>> {
+        return try {
+            val documents = db.collection("cellTowers")
+                .whereIn("uid", cellTowerIds)
+                .get()
+                .await()
+
+            if (!documents.isEmpty) {
+                val cellTowerInfoList = documents.map { document ->
+                    document.toObject(CellTowerInfo::class.java)
+                }
+                Result.success(cellTowerInfoList)
+            } else {
+                Result.failure(Exception("No cell tower data found"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

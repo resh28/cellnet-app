@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CellTowerInfo(
-    val uId: String = "",
+    val uid: String = "",
     val cid: Int? = null,
     val lac: Int? = null,
     val mcc: String = "",

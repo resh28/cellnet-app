@@ -25,7 +25,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -54,7 +53,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.cellnet.core.common.LocationUtil
 import com.example.cellnet.core.common.Util
 import com.example.cellnet.core.designsystem.appSnackbarHost.AppSnackBarHost
-import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
@@ -66,7 +66,6 @@ internal fun HomeRoute(
 }
 
 @RequiresApi(Build.VERSION_CODES.Q)
-@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "DefaultLocale")
 @Composable
 internal fun HomeScreen(
@@ -76,10 +75,6 @@ internal fun HomeScreen(
     val homeUiState by homeViewModel.uiState.collectAsState()
 
     val context = LocalContext.current
-
-    val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-    val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
     val snackbarHostState = remember { SnackbarHostState() }
     val snackBarNotificationFlow by Util.getSnackbarFlow().collectAsStateWithLifecycle()
@@ -173,7 +168,6 @@ internal fun HomeScreen(
         Column(
             modifier = modifier
                 .padding(20.dp),
-//            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -412,8 +406,8 @@ internal fun HomeScreen(
                                         modifier = modifier
                                             .padding(bottom = 5.dp)
                                     )
-                                    Text(text = "${homeUiState.dateTime?.format(dateFormatter)}", fontWeight = FontWeight.Light)
-                                    Text(text = "${homeUiState.dateTime?.format(timeFormatter)}", fontWeight = FontWeight.Light)
+                                    Text(text = LocalDateTime.ofInstant(homeUiState.dateTime?.toInstant() , ZoneId.systemDefault()).format(Util.dateFormatter), fontWeight = FontWeight.Light)
+                                    Text(text = LocalDateTime.ofInstant(homeUiState.dateTime?.toInstant() , ZoneId.systemDefault()).format(Util.timeFormatter), fontWeight = FontWeight.Light)
                                 }
                             }
                             ElevatedCard(
@@ -550,7 +544,7 @@ internal fun HomeScreen(
                             modifier = modifier
                                 .padding(top = 20.dp, bottom = 80.dp)
                                 .fillMaxWidth(),
-                            enabled = !homeUiState.isScanning
+                            enabled = !homeUiState.isScanning && !homeUiState.isDataUploading
                         ) {
                             Text(text = "Scan Again")
                             if (homeUiState.isScanning)

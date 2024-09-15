@@ -8,8 +8,8 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cellnet.core.common.LocationUtil
-import com.example.cellnet.core.common.Util
 import com.example.cellnet.core.common.NetworkUtil
+import com.example.cellnet.core.common.Util
 import com.example.cellnet.core.common.model.CellTowerInfo
 import com.example.cellnet.core.common.model.NetworkInfo
 import com.example.cellnet.core.common.model.SnackbarInfoLevel
@@ -26,9 +26,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.LocalDateTime
+import java.util.Date
 import javax.inject.Inject
 
+@RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val localStorageRepository: LocalStorageRepository,
@@ -85,6 +86,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun getDeviceInfo() {
         val deviceInfo = Util.getDeviceInfo(context)
         deviceInfo.userId = _uiState.value.userData.userId
@@ -114,7 +116,7 @@ class HomeViewModel @Inject constructor(
             val networkOperator = NetworkUtil.getNetworkOperator(context)
             val phoneType = NetworkUtil.getPhoneType(context)
             val wifiSSID = NetworkUtil.getWifiSSID(context)
-            val currentDateTime = LocalDateTime.now()
+            val currentDateTime = Date()
 
             _uiState.update { currentState ->
                 currentState.copy(
@@ -167,7 +169,7 @@ class HomeViewModel @Inject constructor(
             cellTowerLocation = LocationUtil.fetchCellTowerLocationDetails(cellTowerData, context, networkOperatorCodes)
         }
         return CellTowerInfo(
-            uId = "${networkOperatorCodes.mcc}-${networkOperatorCodes.mnc}-${cellTowerData.lac}-${cellTowerData.cid}",
+            uid = "${networkOperatorCodes.mcc}-${networkOperatorCodes.mnc}-${cellTowerData.lac}-${cellTowerData.cid}",
             cid = cellTowerData.cid,
             lac = cellTowerData.lac,
             mcc = networkOperatorCodes.mcc,
@@ -177,6 +179,7 @@ class HomeViewModel @Inject constructor(
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun uploadData() {
         viewModelScope.launch {
             val savedCellTowerData =  saveCellTowerInfo()
@@ -211,7 +214,7 @@ class HomeViewModel @Inject constructor(
         var successful = false
         val networkInfo = NetworkInfo(
             userId = _uiState.value.userData.userId,
-            cellTowerId = _uiState.value.cellTowerInfo.uId,
+            cellTowerId = _uiState.value.cellTowerInfo.uid,
             deviceId = _uiState.value.deviceInfo.androidId,
             networkOperator = _uiState.value.networkOperator,
             networkClass = _uiState.value.networkClass,

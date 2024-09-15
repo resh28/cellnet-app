@@ -4,7 +4,7 @@ import android.location.Location
 import com.example.cellnet.core.common.model.CellTowerInfo
 import com.example.cellnet.core.common.model.DeviceInfo
 import com.example.cellnet.core.common.model.User
-import java.time.LocalDateTime
+import java.util.Date
 
 data class HomeUiState(
     val userData: User = User(),
@@ -17,7 +17,7 @@ data class HomeUiState(
     val networkClass: String = "",
     val signalStrength: Int? = null,
     val currentLocation: Location = Location(""),
-    val dateTime: LocalDateTime? = null,
+    val dateTime: Date? = null,
     val networkOperator: String = "",
     val phoneType: String = "",
     val wifiSSID: String = "",

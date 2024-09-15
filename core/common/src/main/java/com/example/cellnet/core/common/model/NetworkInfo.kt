@@ -2,19 +2,17 @@ package com.example.cellnet.core.common.model
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.encodeToString
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Date
 
-@Serializable
+//@Serializable
 data class NetworkInfo(
     val uid: String = "",
     val userId: String = "",
@@ -26,9 +24,9 @@ data class NetworkInfo(
     val downloadSpeed: Int = 0,
     val uploadSpeed: Int = 0,
     val signalStrength: Int? = null,
-    @Contextual
-    @Serializable(with = LocalDateTimeSerializer::class)
-    val timeStamp: LocalDateTime? = null,
+//    @Contextual
+//    @Serializable(with = LocalDateTimeSerializer::class)
+    val timeStamp: Date? = null,
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
 )

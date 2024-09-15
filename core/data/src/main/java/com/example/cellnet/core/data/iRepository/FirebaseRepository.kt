@@ -16,4 +16,6 @@ interface FirebaseRepository {
     suspend fun saveCellTowerInfo(cellTowerInfo: CellTowerInfo): Result<String>
     suspend fun saveNetworkInfo(networkInfo: NetworkInfo): Result<String>
     suspend fun signOutUser()
+    suspend fun getLastNetworkInfo(duration: Long): Result<List<NetworkInfo>>
+    suspend fun getCellTowerData(cellTowerIds: List<String>): Result<List<CellTowerInfo>>
 }
