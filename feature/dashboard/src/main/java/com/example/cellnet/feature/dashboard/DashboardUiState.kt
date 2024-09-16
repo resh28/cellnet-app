@@ -10,6 +10,8 @@ data class DashboardUiState(
     val cellTowerInfos: List<CellTowerInfo> = emptyList<CellTowerInfo>(),
     val isLoadingNetworkInfos: Boolean = true,
     val isLoadingCellTowerInfos: Boolean = true,
+    val isNetworkInfoFetchError: Boolean = false,
+    val isCellTowerInfoFetchError: Boolean = false,
 
     val avgDownloadSpeed: Double = 0.0,
     val avgUploadSpeed: Double = 0.0,

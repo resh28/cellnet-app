@@ -2,6 +2,8 @@ package com.example.cellnet.feature.authentication
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,6 +50,7 @@ import com.example.cellnet.core.common.Util
 import com.example.cellnet.core.designsystem.appSnackbarHost.AppSnackBarHost
 import com.example.cellnet.core.designsystem.outlinedTextFieldWithErrorLabel.OutlinedTextFieldWithErrorLabel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 internal fun AuthRoute(
     navigateToHomeScreen: (NavOptions?) -> Unit,
@@ -59,6 +62,7 @@ internal fun AuthRoute(
     AuthScreen(modifier = modifier, authViewModel = authViewModel, authUiState = authUiState, navigateToHomeScreen = navigateToHomeScreen)
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 internal fun AuthScreen(

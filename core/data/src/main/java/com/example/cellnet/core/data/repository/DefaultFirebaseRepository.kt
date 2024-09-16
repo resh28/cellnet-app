@@ -1,6 +1,7 @@
 package com.example.cellnet.core.data.repository
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.example.cellnet.core.common.KotlinSerializationMapHelper
 import com.example.cellnet.core.common.model.CellTowerInfo
@@ -140,6 +141,7 @@ class DefaultFirebaseRepository @Inject constructor(
                 val networkInfoList = documents.map { document ->
                     document.toObject(NetworkInfo::class.java)
                 }
+                Log.d("getLastNetworkInfo", "success")
                 Result.success(networkInfoList)
             } else {
                 Result.failure(Exception("No network data found"))
@@ -160,6 +162,7 @@ class DefaultFirebaseRepository @Inject constructor(
                 val cellTowerInfoList = documents.map { document ->
                     document.toObject(CellTowerInfo::class.java)
                 }
+                Log.d("getCellTowerData", "success")
                 Result.success(cellTowerInfoList)
             } else {
                 Result.failure(Exception("No cell tower data found"))

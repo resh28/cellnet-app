@@ -6,9 +6,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cellnet.core.common.Util
 import com.example.cellnet.core.common.model.CellTowerInfo
-import com.example.cellnet.core.common.model.SnackbarInfoLevel
 import com.example.cellnet.core.data.iRepository.FirebaseRepository
 import com.example.cellnet.core.data.iRepository.LocalStorageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,6 +32,16 @@ class DashboardViewModel @Inject constructor(
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
     init {
+        fetchData()
+    }
+
+    fun fetchData() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                isLoadingNetworkInfos = true,
+                isLoadingCellTowerInfos = true
+            )
+        }
         viewModelScope.launch {
             val networkInfoChannel = Channel<Unit>()
 
@@ -55,15 +63,22 @@ class DashboardViewModel @Inject constructor(
         val result = firebaseRepository.getLastNetworkInfo(_uiState.value.durationOfData)
         result.onSuccess {
             _uiState.update { currentState ->
-                currentState.copy(networkInfos = it.reversed())
+                currentState.copy(
+                    networkInfos = it.reversed(),
+                    isNetworkInfoFetchError = false,
+                    isLoadingNetworkInfos = false
+                )
             }
             calculateAvgData()
         }.onFailure { exception ->
             Log.e("GetNetworkInfos", "getNetworkInfos:failure", exception)
-            Util.showSnackbar(SnackbarInfoLevel.ERROR, "Unable to fetch data. Please try again later.")
-        }
-        _uiState.update { currentState ->
-            currentState.copy(isLoadingNetworkInfos = false)
+//            Util.showSnackbar(SnackbarInfoLevel.ERROR, "Unable to fetch data. Please try again later.")
+            _uiState.update { currentState ->
+                currentState.copy(
+                    isNetworkInfoFetchError = true,
+                    isLoadingNetworkInfos = false
+                )
+            }
         }
         channel.send(Unit)
     }
@@ -78,15 +93,22 @@ class DashboardViewModel @Inject constructor(
         val result = firebaseRepository.getCellTowerData(cellTowerIds)
         result.onSuccess {
             _uiState.update { currentState ->
-                currentState.copy(cellTowerInfos = it)
+                currentState.copy(
+                    cellTowerInfos = it,
+                    isCellTowerInfoFetchError = true,
+                    isLoadingCellTowerInfos = false
+                )
             }
             calculateAvgData()
         }.onFailure { exception ->
             Log.e("GetCellTowerInfos", "getCellTowerInfo:failure", exception)
-            Util.showSnackbar(SnackbarInfoLevel.ERROR, "Unable to fetch data. Please try again later.")
-        }
-        _uiState.update { currentState ->
-            currentState.copy(isLoadingCellTowerInfos = false)
+            _uiState.update { currentState ->
+                currentState.copy(
+                    isCellTowerInfoFetchError = true,
+                    isLoadingCellTowerInfos = false
+                )
+            }
+//            Util.showSnackbar(SnackbarInfoLevel.ERROR, "Unable to fetch data. Please try again later.")
         }
     }
 
@@ -112,7 +134,19 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    fun getCellTowerData(uId: String): CellTowerInfo {
-        return _uiState.value.cellTowerInfos.first { it.uid == uId }
+    fun getCellTowerData(uId: String): CellTowerInfo? {
+        return _uiState.value.cellTowerInfos.firstOrNull { it.uid == uId }
+    }
+
+    fun getFrequentNetworkOperator(): String {
+        val operatorFrequency = _uiState.value.networkInfos.groupingBy { it.networkOperator }.eachCount()
+        val mostFrequentNetworkOperator = operatorFrequency.maxByOrNull { it.value }?.key
+        return mostFrequentNetworkOperator ?: ""
+    }
+
+    fun getFrequentNetworkClass(): String {
+        val classFrequency = _uiState.value.networkInfos.groupingBy { it.networkClass }.eachCount()
+        val mostFrequentNetworkClass = classFrequency.maxByOrNull { it.value }?.key
+        return mostFrequentNetworkClass ?: ""
     }
 }
