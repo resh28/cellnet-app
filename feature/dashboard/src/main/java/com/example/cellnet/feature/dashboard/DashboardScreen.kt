@@ -10,27 +10,36 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.ZeroCornerSize
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CellTower
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LeadingIconTab
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -46,6 +55,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,6 +79,7 @@ internal fun DashboardRoute(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -85,6 +96,8 @@ internal fun DashboardScreen(
     val snackBarNotificationFlow by Util.getSnackbarFlow().collectAsStateWithLifecycle()
 
     val tabs = listOf(DashboardTabItem.Stats, DashboardTabItem.NetworkExperience)
+
+    val sheetState = rememberModalBottomSheetState()
 
     LaunchedEffect(key1 = snackBarNotificationFlow) {
         if (snackBarNotificationFlow.second != "") {
@@ -107,6 +120,98 @@ internal fun DashboardScreen(
         },
     )
     {
+        if (dashboardUiState.showFilterBottomSheet) {
+            ModalBottomSheet(
+                onDismissRequest = {
+                    dashboardViewModel.updateShowFilterBottomSheet(false)
+                },
+                sheetState = sheetState
+            ) {
+                Column(
+                    modifier = modifier
+                        .padding(horizontal = 20.dp)
+                        .fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Filter network info",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = modifier
+                            .padding(bottom = 10.dp)
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = modifier
+                            .padding(bottom = 20.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Column {
+                            Text(text = "Duration")
+                            Text(
+                                text = "Duration of data in days",
+                                fontWeight = FontWeight.Light,
+                                fontSize = 10.sp
+                            )
+                        }
+                        TextField(
+                            value = dashboardUiState.durationOfDataTextFiledValue,
+                            onValueChange = { dashboardViewModel.updateDurationOfDataTextFieldValue(it) },
+                            leadingIcon = {
+                                Text(
+                                    text = "-",
+                                    modifier = modifier
+                                        .clickable {
+                                            if (dashboardUiState.durationOfDataTextFiledValue.isNotEmpty() && dashboardUiState.durationOfDataTextFiledValue.toInt()>0) {
+                                                val value = dashboardUiState.durationOfDataTextFiledValue.toInt() - 1
+                                                dashboardViewModel.updateDurationOfDataTextFieldValue(value.toString())
+                                            }
+                                        },
+                                ) },
+                            trailingIcon = {
+                                Text(
+                                    text = "+",
+                                    modifier = modifier
+                                        .clickable {
+                                            val value = dashboardUiState.durationOfDataTextFiledValue.toInt() + 1
+                                            dashboardViewModel.updateDurationOfDataTextFieldValue(value.toString())
+                                        },
+                                    ) },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number
+                            ),
+                            modifier = modifier
+                                .width(130.dp)
+                                .height(45.dp),
+                            singleLine = true,
+                            textStyle = TextStyle(
+                                textAlign = TextAlign.Center,
+                                lineHeight = 14.sp
+                            ),
+                            shape = MaterialTheme.shapes.medium.copy(
+                                bottomEnd = ZeroCornerSize,
+                                bottomStart = ZeroCornerSize
+                            )
+                        )
+                    }
+                    Button(
+                        modifier = modifier
+                            .padding(bottom = 20.dp)
+                            .fillMaxWidth(),
+                        onClick = {
+                            dashboardViewModel.updateDurationOfData(dashboardUiState.durationOfDataTextFiledValue)
+                            dashboardViewModel.fetchData()
+                            dashboardViewModel.updateShowFilterBottomSheet(false)
+                        },
+                        enabled = dashboardUiState.durationOfData.isNotEmpty()
+                    ) {
+                        Text(text = "Save")
+                    }
+                }
+            }
+        }
+
         Column(
             modifier = modifier
                 .padding(20.dp)
@@ -148,7 +253,11 @@ internal fun DashboardScreen(
                     Icon(
                         imageVector = Icons.Default.FilterAlt,
                         contentDescription = "filter",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = modifier
+                            .clickable {
+                                dashboardViewModel.updateShowFilterBottomSheet(true)
+                            },
                     )
                 }
             }
@@ -432,8 +541,8 @@ internal fun DashboardTabRow(
             LeadingIconTab(
                 selected = tabs.indexOf(currentPage) == index,
                 onClick = { onClickTab(index) },
-                text = { Text(text = tab.title, fontSize = 16.sp, ) },
-                icon = { Icon(imageVector = tab.icon, contentDescription = tab.title, ) },
+                text = { Text(text = tab.title, fontSize = 16.sp) },
+                icon = { Icon(imageVector = tab.icon, contentDescription = tab.title) },
                 selectedContentColor = MaterialTheme.colorScheme.primary,
                 unselectedContentColor = MaterialTheme.colorScheme.secondary,
             )

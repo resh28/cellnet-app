@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 object Util {
     private var job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Default + job)
@@ -26,9 +26,12 @@ object Util {
     private val snackBarNotificationFlow = MutableStateFlow(Pair(SnackbarInfoLevel.INFO, ""))
 
 
-    val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-    val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+    @RequiresApi(Build.VERSION_CODES.O)
+    val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+    @RequiresApi(Build.VERSION_CODES.O)
+    val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    @RequiresApi(Build.VERSION_CODES.O)
+    val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
     @SuppressLint("HardwareIds")
     fun getDeviceInfo(context: Context): DeviceInfo {

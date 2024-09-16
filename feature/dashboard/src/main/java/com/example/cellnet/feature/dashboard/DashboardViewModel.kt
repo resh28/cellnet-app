@@ -58,9 +58,27 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
+    fun updateShowFilterBottomSheet(value: Boolean) {
+        _uiState.update { currentState ->
+            currentState.copy(showFilterBottomSheet = value)
+        }
+    }
+
+    fun updateDurationOfData(value: String) {
+        _uiState.update { currentState ->
+            currentState.copy(durationOfData = value)
+        }
+    }
+
+    fun updateDurationOfDataTextFieldValue(value: String) {
+        _uiState.update { currentState ->
+            currentState.copy(durationOfDataTextFiledValue = value)
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     private suspend fun getNetworkInfos(channel: Channel<Unit>) = withContext(Dispatchers.Default) {
-        val result = firebaseRepository.getLastNetworkInfo(_uiState.value.durationOfData)
+        val result = firebaseRepository.getLastNetworkInfo(_uiState.value.durationOfData.toLong())
         result.onSuccess {
             _uiState.update { currentState ->
                 currentState.copy(
