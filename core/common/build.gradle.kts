@@ -48,4 +48,6 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
 
     implementation(libs.kotlinx.serialization.json)
+
+    implementation(libs.play.services.maps)
 }

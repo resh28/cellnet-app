@@ -67,4 +67,8 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
+
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.location)
+    implementation(libs.play.services.maps)
 }

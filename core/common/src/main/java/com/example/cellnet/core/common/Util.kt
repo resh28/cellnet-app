@@ -4,11 +4,20 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.PorterDuff
 import android.os.Build
 import android.provider.Settings
+import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.content.ContextCompat
 import com.example.cellnet.core.common.model.DeviceInfo
 import com.example.cellnet.core.common.model.SnackbarInfoLevel
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -16,7 +25,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
-
 
 
 object Util {
@@ -76,6 +84,58 @@ object Util {
 
     fun getSnackbarFlow(): MutableStateFlow<Pair<SnackbarInfoLevel, String>> {
         return snackBarNotificationFlow
+    }
+
+    fun bitmapDescriptorFromVector(
+        context: Context,
+        @DrawableRes vectorDrawableResourceId: Int,
+        @DrawableRes bgVectorDrawableResourceId: Int,
+        markerWidth: Int = 100, // Desired width for the marker
+        markerHeight: Int = 100, // Desired height for the marker
+        bgColor: Color,
+        iconColor: Color
+    ): BitmapDescriptor {
+        // Get the background drawable
+        val background = ContextCompat.getDrawable(context, bgVectorDrawableResourceId)
+        background!!.setBounds(0, 0, markerWidth, markerHeight)
+        background.setColorFilter(bgColor.toArgb(), PorterDuff.Mode.SRC_IN)
+
+        // Create a bitmap with the desired marker size
+        val bitmap = Bitmap.createBitmap(markerWidth, markerHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        // Change background color
+//        canvas.drawColor(bgColor.toArgb()) // Convert to ARGB
+        background.draw(canvas)
+
+        // Get the vector drawable
+        val vectorDrawable = ContextCompat.getDrawable(context, vectorDrawableResourceId)
+
+        // Change icon color
+        vectorDrawable!!.setColorFilter(iconColor.toArgb(), PorterDuff.Mode.SRC_IN) // Convert to ARGB
+
+        // Calculate scale factor to fit the vector drawable within the background
+        val scaleX = markerWidth.toFloat() / vectorDrawable.intrinsicWidth
+        val scaleY = markerHeight.toFloat() / vectorDrawable.intrinsicHeight
+        val scale = minOf(scaleX, scaleY) // Use the smaller scale to maintain aspect ratio
+
+        // Create a scaled bitmap for the vector drawable
+        val scaledWidth = (vectorDrawable.intrinsicWidth * scale).toInt()
+        val scaledHeight = (vectorDrawable.intrinsicHeight * scale).toInt()
+
+        // Set bounds for the scaled vector drawable (center it)
+        vectorDrawable.setBounds(
+            ((markerWidth - scaledWidth) / 2) + 10,
+            ((markerHeight - scaledHeight) / 2) + 5,
+            ((markerWidth + scaledWidth) / 2) - 10,
+            ((markerHeight + scaledHeight) / 2) - 10
+        )
+
+        // Draw the scaled vector drawable onto the canvas
+        vectorDrawable.draw(canvas)
+
+        // Return the bitmap as a BitmapDescriptor
+        return BitmapDescriptorFactory.fromBitmap(bitmap)
     }
 
 }
