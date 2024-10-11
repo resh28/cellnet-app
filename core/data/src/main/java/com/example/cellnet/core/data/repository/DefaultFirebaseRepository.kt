@@ -4,6 +4,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.example.cellnet.core.common.KotlinSerializationMapHelper
+import com.example.cellnet.core.common.Util
 import com.example.cellnet.core.common.model.CellTowerInfo
 import com.example.cellnet.core.common.model.DeviceInfo
 import com.example.cellnet.core.common.model.NetworkInfo
@@ -153,15 +154,27 @@ class DefaultFirebaseRepository @Inject constructor(
 
     override suspend fun getCellTowerData(cellTowerIds: List<String>): Result<List<CellTowerInfo>> {
         return try {
-            val documents = db.collection("cellTowers")
-                .whereIn("uid", cellTowerIds)
-                .get()
-                .await()
+            // Split the list of cellTowerIds into batches of 30
+            val batches = Util.splitIntoBatches(cellTowerIds, 30)
+            val cellTowerInfoList = mutableListOf<CellTowerInfo>()
 
-            if (!documents.isEmpty) {
-                val cellTowerInfoList = documents.map { document ->
-                    document.toObject(CellTowerInfo::class.java)
+            // Query each batch
+            for (batch in batches) {
+                val documents = db.collection("cellTowers")
+                    .whereIn("uid", batch)
+                    .get()
+                    .await()
+
+                if (!documents.isEmpty) {
+                    cellTowerInfoList.addAll(
+                        documents.map { document ->
+                            document.toObject(CellTowerInfo::class.java)
+                        }
+                    )
                 }
+            }
+
+            if (cellTowerInfoList.isNotEmpty()) {
                 Log.d("getCellTowerData", "success")
                 Result.success(cellTowerInfoList)
             } else {

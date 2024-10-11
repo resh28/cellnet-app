@@ -49,6 +49,7 @@ class DashboardViewModel @Inject constructor(
                 isLoadingNetworkInfos = true,
                 isLoadingCellTowerInfos = true,
                 isLoadingMap = true,
+                isLoadingNearestTower = true,
                 cellTowerInfos = emptyList(),
                 networkInfos = emptyList(),
                 avgDownloadSpeed = 0.0,
@@ -153,6 +154,7 @@ class DashboardViewModel @Inject constructor(
                     )
                 }
                 getFrequentlyConnectedTower()
+                getNearestTower()
             }.onFailure { exception ->
                 var error = false
                 Log.e("GetCellTowerInfos", "getCellTowerInfo:failure", exception)
@@ -215,6 +217,32 @@ class DashboardViewModel @Inject constructor(
                 currentState.copy(
                     frequentlyConnectedTowerInfo = getCellTowerData(mostFrequentCellTowerId),
                     isLoadingMap = false
+                )
+            }
+    }
+
+    private fun getNearestTower() {
+        var nearestTowerInfo: CellTowerInfo? = null
+        var shortestDistance = Float.MAX_VALUE
+
+        for (tower in _uiState.value.cellTowerInfos) {
+            val result = FloatArray(1)
+            Location.distanceBetween(
+                _uiState.value.currentLocation.latitude, _uiState.value.currentLocation.longitude,
+                tower.lat, tower.lng,
+                result
+            )
+
+            if (result[0] < shortestDistance) {
+                shortestDistance = result[0]
+                nearestTowerInfo = tower
+            }
+        }
+        if (nearestTowerInfo != null)
+            _uiState.update { currentState ->
+                currentState.copy(
+                    nearestTowerInfo = nearestTowerInfo,
+                    isLoadingNearestTower = false
                 )
             }
     }

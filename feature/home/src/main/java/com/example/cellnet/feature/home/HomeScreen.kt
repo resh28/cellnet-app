@@ -182,24 +182,24 @@ internal fun HomeScreen(
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.ExtraBold
                 )
-                if (homeUiState.isScanData)
-                    Button(
-                        onClick = {
-                            homeViewModel.updateIsDataUploading(true)
-                            homeViewModel.uploadData()
-                        },
-                        enabled = !homeUiState.isDataUploaded && !homeUiState.isDataUploading
-                    ) {
-                        Text(text = "Upload Data")
-                        if (homeUiState.isDataUploading)
-                            CircularProgressIndicator(
-                                modifier = modifier
-                                    .size(24.dp)
-                                    .padding(start = 5.dp),
-                                strokeWidth = 2.dp,
-                                color = Color.Gray
-                            )
-                    }
+//                if (homeUiState.isScanData)
+//                    Button(
+//                        onClick = {
+//                            homeViewModel.updateIsDataUploading(true)
+//                            homeViewModel.uploadData()
+//                        },
+//                        enabled = !homeUiState.isDataUploaded && !homeUiState.isDataUploading
+//                    ) {
+//                        Text(text = "Upload Data")
+//                        if (homeUiState.isDataUploading)
+//                            CircularProgressIndicator(
+//                                modifier = modifier
+//                                    .size(24.dp)
+//                                    .padding(start = 5.dp),
+//                                strokeWidth = 2.dp,
+//                                color = Color.Gray
+//                            )
+//                    }
             }
             Text(
                 text = "Hello, welcome ${homeUiState.userData.firstName}. Let's explore about your network information.",
@@ -393,7 +393,7 @@ internal fun HomeScreen(
                                     defaultElevation = 6.dp
                                 ),
                                 modifier = Modifier
-                                    .fillMaxWidth(0.45f)
+                                    .fillMaxWidth(0.47f)
                                     .padding(end = 20.dp),
                             ) {
                                 Column(

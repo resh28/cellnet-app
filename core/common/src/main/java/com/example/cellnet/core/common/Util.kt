@@ -138,4 +138,14 @@ object Util {
         return BitmapDescriptorFactory.fromBitmap(bitmap)
     }
 
+    fun <T> splitIntoBatches(list: List<T>, batchSize: Int): List<List<T>> {
+        val batches = mutableListOf<List<T>>()
+        var index = 0
+        while (index < list.size) {
+            val end = (index + batchSize).coerceAtMost(list.size)
+            batches.add(list.subList(index, end))
+            index += batchSize
+        }
+        return batches
+    }
 }

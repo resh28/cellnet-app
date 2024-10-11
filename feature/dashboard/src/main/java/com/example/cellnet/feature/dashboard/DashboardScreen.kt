@@ -494,7 +494,7 @@ internal fun StatsView(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(400.dp)
-                .padding(top = 10.dp, bottom = 80.dp),
+                .padding(top = 10.dp, bottom = 10.dp),
         ) {
             Column(
                 modifier = modifier
@@ -534,6 +534,78 @@ internal fun StatsView(
                             )
                             } else {
                                 Text("Unable to find most frequently connected cell tower data.")
+                            }
+                        }
+                    }
+                } else {
+                    Column(
+                        modifier = modifier
+                            .padding(20.dp)
+                    ){
+                        Text("Location permission is required to display the map.")
+                    }
+                }
+            }
+        }
+
+        Text(
+            text = "Nearest cell tower data",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = modifier
+                .padding(top = 20.dp)
+        )
+        ElevatedCard(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiary
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 6.dp
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(470.dp)
+                .padding(top = 10.dp, bottom = 80.dp),
+        ) {
+            Column(
+                modifier = modifier
+            ) {
+                if (locationPermissionGranted) {
+                    if (dashboardUiState.nearestTowerInfo?.cid != null) {
+                        val nearestTowerLocation = LatLng(dashboardUiState.nearestTowerInfo.lat, dashboardUiState.nearestTowerInfo.lng)
+                        val cameraPositionState = rememberCameraPositionState {
+                            position = CameraPosition.fromLatLngZoom(nearestTowerLocation, 10f)
+                        }
+
+                        GoogleMap(
+                            modifier = Modifier.fillMaxSize(),
+                            cameraPositionState = cameraPositionState,
+                            properties = MapProperties(isMyLocationEnabled = true),
+                            uiSettings = MapUiSettings(zoomControlsEnabled = true),
+                        ) {
+                            CellTowerMarker(
+                                location = nearestTowerLocation,
+                                context = context,
+                                modifier = modifier,
+                                cellTowerInfo = dashboardUiState.nearestTowerInfo
+                            )
+                        }
+                    } else {
+                        Column(
+                            modifier = modifier
+                                .padding(20.dp)
+                                .fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ){
+                            if (dashboardUiState.isLoadingNearestTower){
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(60.dp),
+                                    color = MaterialTheme.colorScheme.secondary,
+                                )
+                            } else {
+                                Text("Unable to find the nearest cell tower data.")
                             }
                         }
                     }
@@ -715,7 +787,7 @@ internal fun DashboardTabRow(
             LeadingIconTab(
                 selected = tabs.indexOf(currentPage) == index,
                 onClick = { onClickTab(index) },
-                text = { Text(text = tab.title, fontSize = 14.sp) },
+                text = { Text(text = tab.title, fontSize = 10.sp) },
                 icon = { Icon(imageVector = tab.icon, contentDescription = tab.title) },
                 selectedContentColor = MaterialTheme.colorScheme.primary,
                 unselectedContentColor = MaterialTheme.colorScheme.secondary,

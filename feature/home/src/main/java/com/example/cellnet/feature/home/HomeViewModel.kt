@@ -135,6 +135,10 @@ class HomeViewModel @Inject constructor(
                     isDataUploaded = false
                 )
             }
+            if (networkClass.isNotEmpty() && signalStrength != null && networkOperator.isNotEmpty() && location != null
+                && cellTowerInfo.mcc.isNotEmpty() && cellTowerInfo.mnc.isNotEmpty() && cellTowerInfo.cid != null && cellTowerInfo.lac != null)
+                uploadData()
+            else Util.showSnackbar(SnackbarInfoLevel.ERROR, "Unable to upload data. Please rescan and try again.")
         }
     }
 

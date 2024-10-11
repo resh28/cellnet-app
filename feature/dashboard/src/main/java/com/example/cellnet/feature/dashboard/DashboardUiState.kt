@@ -14,6 +14,7 @@ data class DashboardUiState(
     val isLoadingNetworkInfos: Boolean = true,
     val isLoadingCellTowerInfos: Boolean = true,
     val isLoadingMap: Boolean = true,
+    val isLoadingNearestTower: Boolean = true,
     val isNetworkInfoFetchError: Boolean = false,
     val isCellTowerInfoFetchError: Boolean = false,
     val showFilterBottomSheet: Boolean = false,
@@ -23,6 +24,7 @@ data class DashboardUiState(
     val avgSignalStrength: Int = 0,
 
     val frequentlyConnectedTowerInfo: CellTowerInfo? = null,
+    val nearestTowerInfo: CellTowerInfo? = null,
 
     val locationScores:  List<Pair<LocationStats, Double>> = emptyList(),
     val currentLocation: LatLng = LatLng(0.0, 0.0)
