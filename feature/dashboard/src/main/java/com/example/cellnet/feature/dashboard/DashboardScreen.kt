@@ -659,7 +659,7 @@ internal fun NetworkInfoView(
                     ) {
                         Column(
                             modifier = modifier
-                                .fillMaxWidth(0.65f),
+                                .fillMaxWidth(0.6f),
                             verticalArrangement = Arrangement.spacedBy(0.dp)
                         ) {
                             Text(
@@ -687,7 +687,7 @@ internal fun NetworkInfoView(
                             ) {
                                 Icon(imageVector = Icons.Default.CellTower, contentDescription = "CellTower")
                                 Column {
-                                    Text(text = "${cellTowerData?.cid}", modifier = modifier.padding(start = 8.dp), fontSize = 15.sp, style = TextStyle(lineHeight = 14.sp))
+                                    Text(text = "${cellTowerData?.cid}", modifier = modifier.padding(start = 8.dp), fontSize = 14.sp, style = TextStyle(lineHeight = 14.sp))
                                     Text(text = "lat: ${String.format("%.4f", cellTowerData?.lat)}", modifier = modifier.padding(start = 8.dp), fontWeight = FontWeight.Light, fontSize = 12.sp, style = TextStyle(lineHeight = 10.sp))
                                     Text(text = "lng: ${String.format("%.4f", cellTowerData?.lng)}", modifier = modifier.padding(start = 8.dp), fontWeight = FontWeight.Light, fontSize = 12.sp, style = TextStyle(lineHeight = 11.sp))
                                 }
